@@ -223,6 +223,7 @@ def render_gitignore_block() -> str:
     return """.venv/
 venv/
 env/
+__pycache__/
 .coverage
 .pytest_cache/
 .mypy_cache/
