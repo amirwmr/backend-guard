@@ -1,0 +1,112 @@
+{
+  "root": "<normalized>",
+  "generated_at": "<normalized>",
+  "project_kind": "fastapi",
+  "sections": [
+    {
+      "name": "Environment",
+      "findings": [
+        {
+          "category": "environment",
+          "title": "Python runtime",
+          "detail": "<normalized>",
+          "severity": "info",
+          "status": "passed",
+          "remediation": "Use Python 3.12 or newer for full backend-guard support.",
+          "location": null,
+          "tool": null
+        },
+        {
+          "category": "environment",
+          "title": "Virtual environment",
+          "detail": "No project-local virtual environment was detected.",
+          "severity": "warning",
+          "status": "warning",
+          "remediation": "Run 'backend-guard init' to create .venv automatically.",
+          "location": null,
+          "tool": null
+        },
+        {
+          "category": "environment",
+          "title": "Package manager",
+          "detail": "Falling back to pip-compatible workflow.",
+          "severity": "info",
+          "status": "passed",
+          "remediation": null,
+          "location": null,
+          "tool": null
+        },
+        {
+          "category": "environment",
+          "title": "Dependency lockfile",
+          "detail": "No dependency lockfile or requirements manifest was detected.",
+          "severity": "warning",
+          "status": "warning",
+          "remediation": "Commit uv.lock, poetry.lock, Pipfile.lock, or a requirements file.",
+          "location": null,
+          "tool": null
+        }
+      ]
+    },
+    {
+      "name": "Structure",
+      "findings": [
+        {
+          "category": "structure",
+          "title": ".pre-commit-config.yaml missing",
+          "detail": ".pre-commit-config.yaml is not present.",
+          "severity": "warning",
+          "status": "warning",
+          "remediation": "Run 'backend-guard init' to generate a secure pre-commit config.",
+          "location": null,
+          "tool": null
+        },
+        {
+          "category": "structure",
+          "title": "ruff.toml missing",
+          "detail": "ruff.toml is not present.",
+          "severity": "warning",
+          "status": "warning",
+          "remediation": "Run 'backend-guard init' to generate Ruff defaults.",
+          "location": null,
+          "tool": null
+        },
+        {
+          "category": "structure",
+          "title": ".backend-guard.toml missing",
+          "detail": ".backend-guard.toml is not present.",
+          "severity": "warning",
+          "status": "warning",
+          "remediation": "Use .backend-guard.toml to tailor checks and generated files.",
+          "location": null,
+          "tool": null
+        },
+        {
+          "category": "structure",
+          "title": ".editorconfig missing",
+          "detail": ".editorconfig is not present.",
+          "severity": "warning",
+          "status": "warning",
+          "remediation": "Add editor defaults to reduce whitespace and newline drift.",
+          "location": null,
+          "tool": null
+        },
+        {
+          "category": "structure",
+          "title": ".env.example missing",
+          "detail": ".env.example is not present.",
+          "severity": "warning",
+          "status": "warning",
+          "remediation": "Document required environment variables without committing secrets.",
+          "location": null,
+          "tool": null
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "python_files_scanned": 1,
+    "package_manager": "pip",
+    "environment": null
+  }
+}

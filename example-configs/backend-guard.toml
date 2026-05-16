@@ -1,0 +1,27 @@
+# managed-by-backend-guard
+version = 1
+
+[files]
+editorconfig = true
+env_example = true
+gitignore = true
+makefile = true
+github_actions = true
+
+[checks]
+lint = true
+format = true
+security = true
+dependencies = true
+secrets = true
+git = true
+framework = true
+doctor = true
+
+[tools]
+use_ruff_format = true
+include_black = false
+include_isort = false
+include_git_secrets = false
+include_osv_scanner = false
+include_safety = false
