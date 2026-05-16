@@ -3,34 +3,34 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel, Field
 
 
-class ProjectKind(str, Enum):
+class ProjectKind(StrEnum):
     DJANGO = "django"
     FASTAPI = "fastapi"
     GENERIC = "generic-python-backend"
     UNKNOWN = "unknown"
 
 
-class PackageManager(str, Enum):
+class PackageManager(StrEnum):
     UV = "uv"
     POETRY = "poetry"
     PIPENV = "pipenv"
     PIP = "pip"
 
 
-class Severity(str, Enum):
+class Severity(StrEnum):
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
 
 
-class CheckStatus(str, Enum):
+class CheckStatus(StrEnum):
     PASSED = "passed"
     FAILED = "failed"
     WARNING = "warning"

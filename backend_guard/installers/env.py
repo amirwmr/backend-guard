@@ -20,7 +20,7 @@ def create_virtual_environment(
     env_path = root / ".venv"
     uv_executable = runner.which("uv")
     if uv_executable:
-        command = [uv_executable, "venv", str(env_path)]
+        command = [uv_executable, "venv", "--seed", str(env_path)]
     else:
         system_python = resolve_system_python(runner)
         command = [str(system_python), "-m", "venv", str(env_path)]
@@ -33,7 +33,9 @@ def create_virtual_environment(
                 source="dry-run",
                 manager=package_manager.manager,
             ),
-            CommandResult(args=command, exit_code=0, stdout="Dry run: environment creation skipped."),
+            CommandResult(
+                args=command, exit_code=0, stdout="Dry run: environment creation skipped."
+            ),
         )
 
     result = runner.run(command, cwd=root)

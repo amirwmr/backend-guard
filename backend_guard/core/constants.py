@@ -25,7 +25,7 @@ PRE_COMMIT_HOOK_REPOS = {
     "astral-sh/ruff-pre-commit": "v0.6.9",
     "asottile/pyupgrade": "v3.17.0",
     "PyCQA/bandit": "1.7.10",
-    "Yelp/detect-secrets": "v1.5.0",
+    "Yelp/detect-secrets": "v1.5.0",  # pragma: allowlist secret
     "pypa/pip-audit": "v2.7.3",
 }
 
@@ -80,4 +80,5 @@ SKIP_DIRECTORIES = {
     ".ruff_cache",
     ".tox",
     "node_modules",
+    "tests",
 }

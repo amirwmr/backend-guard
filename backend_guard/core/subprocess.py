@@ -5,8 +5,8 @@ from __future__ import annotations
 import shutil
 import subprocess
 import time
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Mapping
 
 from backend_guard.core.constants import DEFAULT_TIMEOUT_SECONDS
 from backend_guard.core.models import CommandResult

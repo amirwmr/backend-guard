@@ -13,7 +13,12 @@ from backend_guard.core.constants import (
     MANAGED_FILES,
     STATE_DIR_NAME,
 )
-from backend_guard.core.models import CommandResult, ManagedWriteResult, ProjectAnalysis, SelfInstallManifest
+from backend_guard.core.models import (
+    CommandResult,
+    ManagedWriteResult,
+    ProjectAnalysis,
+    SelfInstallManifest,
+)
 from backend_guard.core.subprocess import CommandRunner
 from backend_guard.templates.project_files import (
     managed_file_targets,
@@ -67,12 +72,45 @@ class ProjectBootstrapService:
         elif manager.manager.value == "pipenv":
             command = [manager.executable or "pipenv", "install", "--dev", *packages]
         else:
+            ensurepip_result = self._ensure_pip_available(project, dry_run=dry_run)
+            if ensurepip_result is not None and not ensurepip_result.ok:
+                return ensurepip_result
             python_command = python_module_command(project.environment, "pip")
             command = [*python_command, "install", *packages]
 
         if dry_run:
-            return CommandResult(args=command, exit_code=0, stdout="Dry run: tooling installation skipped.")
+            return CommandResult(
+                args=command, exit_code=0, stdout="Dry run: tooling installation skipped."
+            )
         return self.runner.run(command, cwd=project.root)
+
+    def _ensure_pip_available(
+        self,
+        project: ProjectAnalysis,
+        *,
+        dry_run: bool = False,
+    ) -> CommandResult | None:
+        if project.environment is None:
+            return None
+
+        pip_check_command = [*python_module_command(project.environment, "pip"), "--version"]
+        pip_check_result = self.runner.run(pip_check_command, cwd=project.root)
+        if pip_check_result.ok:
+            return None
+
+        ensurepip_command = [
+            str(project.environment.python_executable),
+            "-m",
+            "ensurepip",
+            "--upgrade",
+        ]
+        if dry_run:
+            return CommandResult(
+                args=ensurepip_command,
+                exit_code=0,
+                stdout="Dry run: ensurepip bootstrap skipped.",
+            )
+        return self.runner.run(ensurepip_command, cwd=project.root)
 
     def write_project_files(
         self,
@@ -157,7 +195,9 @@ class ProjectBootstrapService:
             )
         return results
 
-    def install_git_hooks(self, project: ProjectAnalysis, *, dry_run: bool = False) -> CommandResult:
+    def install_git_hooks(
+        self, project: ProjectAnalysis, *, dry_run: bool = False
+    ) -> CommandResult:
         if not (project.root / ".git").exists():
             return CommandResult(
                 args=[],
@@ -166,24 +206,35 @@ class ProjectBootstrapService:
             )
         command = [*python_module_command(project.environment, "pre_commit"), "install"]
         if dry_run:
-            return CommandResult(args=command, exit_code=0, stdout="Dry run: hook installation skipped.")
+            return CommandResult(
+                args=command, exit_code=0, stdout="Dry run: hook installation skipped."
+            )
         return self.runner.run(command, cwd=project.root)
 
-    def update_project(self, project: ProjectAnalysis, *, dry_run: bool = False) -> list[CommandResult]:
+    def update_project(
+        self, project: ProjectAnalysis, *, dry_run: bool = False
+    ) -> list[CommandResult]:
         commands: list[list[str]] = [
             [*python_module_command(project.environment, "pre_commit"), "autoupdate"],
             [*python_module_command(project.environment, "pre_commit"), "install"],
         ]
         if project.kind.value == "django" and project.manage_py:
             commands.append(
-                [str(project.environment.python_executable if project.environment else "python"), "manage.py", "check", "--deploy"]
+                [
+                    str(project.environment.python_executable if project.environment else "python"),
+                    "manage.py",
+                    "check",
+                    "--deploy",
+                ]
             )
 
         results: list[CommandResult] = []
         for command in commands:
             if dry_run:
                 results.append(
-                    CommandResult(args=command, exit_code=0, stdout="Dry run: update command skipped.")
+                    CommandResult(
+                        args=command, exit_code=0, stdout="Dry run: update command skipped."
+                    )
                 )
             else:
                 results.append(self.runner.run(command, cwd=project.root))
@@ -213,7 +264,9 @@ class ProjectBootstrapService:
                 ),
             )
 
-        manifest = SelfInstallManifest.model_validate_json(manifest_path.read_text(encoding="utf-8"))
+        manifest = SelfInstallManifest.model_validate_json(
+            manifest_path.read_text(encoding="utf-8")
+        )
         if not manifest.uninstall_command:
             return CommandResult(
                 args=[],
@@ -237,5 +290,7 @@ class ProjectBootstrapService:
         state_dir = Path.home() / STATE_DIR_NAME
         state_dir.mkdir(parents=True, exist_ok=True)
         manifest_path = state_dir / INSTALL_MANIFEST_NAME
-        manifest_path.write_text(json.dumps(manifest.model_dump(mode="json"), indent=2), encoding="utf-8")
+        manifest_path.write_text(
+            json.dumps(manifest.model_dump(mode="json"), indent=2), encoding="utf-8"
+        )
         return manifest_path

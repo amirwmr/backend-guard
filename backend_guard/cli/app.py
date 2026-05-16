@@ -102,7 +102,9 @@ def main(
     yes: bool = typer.Option(False, "--yes", help="Assume yes for prompts."),
     verbose: bool = typer.Option(False, "--verbose", help="Enable verbose command output."),
     json_output: bool = typer.Option(False, "--json", help="Render JSON output when supported."),
-    dry_run: bool = typer.Option(False, "--dry-run", help="Preview actions without changing files."),
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help="Preview actions without changing files."
+    ),
 ) -> None:
     """Initialize global application state."""
     console = Console()
@@ -131,7 +133,9 @@ def init(ctx: typer.Context) -> None:
         state.console.print("Existing unmanaged files would be overwritten:")
         for conflict in conflicts:
             state.console.print(f" - {conflict}")
-        overwrite = state.yes or Confirm.ask("Overwrite these files after backing them up?", default=False)
+        overwrite = state.yes or Confirm.ask(
+            "Overwrite these files after backing them up?", default=False
+        )
         if not overwrite:
             raise typer.Exit(code=1)
 
@@ -220,8 +224,12 @@ def update(ctx: typer.Context) -> None:
 @app.command()
 def uninstall(
     ctx: typer.Context,
-    project: bool = typer.Option(True, "--project/--no-project", help="Remove project integration files."),
-    self_uninstall: bool = typer.Option(False, "--self", help="Uninstall the backend-guard CLI itself."),
+    project: bool = typer.Option(
+        True, "--project/--no-project", help="Remove project integration files."
+    ),
+    self_uninstall: bool = typer.Option(
+        False, "--self", help="Uninstall the backend-guard CLI itself."
+    ),
 ) -> None:
     """Remove generated project files and optionally uninstall the CLI."""
     state = _state(ctx)

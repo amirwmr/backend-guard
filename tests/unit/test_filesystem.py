@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from backend_guard.utils.filesystem import remove_managed_file, upsert_managed_block, write_managed_file
+from backend_guard.utils.filesystem import (
+    remove_managed_file,
+    upsert_managed_block,
+    write_managed_file,
+)
 
 
 def test_write_managed_file_creates_and_updates(tmp_path: Path) -> None:

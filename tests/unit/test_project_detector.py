@@ -20,7 +20,9 @@ def test_detects_django_project(django_project: Path) -> None:
 
 
 def test_detects_generic_backend(tmp_path: Path) -> None:
-    (tmp_path / "requirements.txt").write_text("sqlalchemy==2.0.0\nalembic==1.13.0\n", encoding="utf-8")
+    (tmp_path / "requirements.txt").write_text(
+        "sqlalchemy==2.0.0\nalembic==1.13.0\n", encoding="utf-8"
+    )
     (tmp_path / "service.py").write_text("import sqlalchemy\n", encoding="utf-8")
     result = detect_project(tmp_path, CommandRunner())
     assert result.kind is ProjectKind.GENERIC

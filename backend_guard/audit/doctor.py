@@ -19,9 +19,7 @@ class DoctorService:
     def run(self, project: ProjectAnalysis) -> list[DoctorCheck]:
         checks: list[DoctorCheck] = []
         status = (
-            CheckStatus.PASSED
-            if sys.version_info[:2] >= MIN_PYTHON_VERSION
-            else CheckStatus.FAILED
+            CheckStatus.PASSED if sys.version_info[:2] >= MIN_PYTHON_VERSION else CheckStatus.FAILED
         )
         checks.append(
             DoctorCheck(
@@ -41,20 +39,28 @@ class DoctorService:
                     if project.environment
                     else "No project-local environment was detected."
                 ),
-                remediation="Run 'backend-guard init' to create .venv." if not project.environment else None,
+                remediation="Run 'backend-guard init' to create .venv."
+                if not project.environment
+                else None,
             )
         )
 
         manager_ok = bool(
             project.package_manager
-            and (project.package_manager.manager.value == "pip" or project.package_manager.executable)
+            and (
+                project.package_manager.manager.value == "pip" or project.package_manager.executable
+            )
         )
         checks.append(
             DoctorCheck(
                 name="package-manager",
                 status=CheckStatus.PASSED if manager_ok else CheckStatus.WARNING,
-                detail=project.package_manager.reason if project.package_manager else "No package manager detected.",
-                remediation="Install the detected package manager or use pip." if not manager_ok else None,
+                detail=project.package_manager.reason
+                if project.package_manager
+                else "No package manager detected.",
+                remediation="Install the detected package manager or use pip."
+                if not manager_ok
+                else None,
             )
         )
 
@@ -63,7 +69,9 @@ class DoctorService:
             DoctorCheck(
                 name="git-hooks",
                 status=CheckStatus.PASSED if hooks_ok else CheckStatus.WARNING,
-                detail="pre-commit hook is installed." if hooks_ok else "pre-commit hook is missing.",
+                detail="pre-commit hook is installed."
+                if hooks_ok
+                else "pre-commit hook is missing.",
                 remediation="Run 'backend-guard init' or 'python -m pre_commit install'."
                 if not hooks_ok
                 else None,
@@ -75,7 +83,9 @@ class DoctorService:
             DoctorCheck(
                 name="config-file",
                 status=CheckStatus.PASSED if config_ok else CheckStatus.WARNING,
-                detail=f"{CONFIG_FILE_NAME} detected." if config_ok else f"{CONFIG_FILE_NAME} is missing.",
+                detail=f"{CONFIG_FILE_NAME} detected."
+                if config_ok
+                else f"{CONFIG_FILE_NAME} is missing.",
                 remediation="Run 'backend-guard init' to generate the config."
                 if not config_ok
                 else None,

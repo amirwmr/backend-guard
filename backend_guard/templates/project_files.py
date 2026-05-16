@@ -11,7 +11,11 @@ from backend_guard.core.models import ProjectAnalysis, ProjectKind
 
 def render_pre_commit_config(project: ProjectAnalysis, config: BackendGuardConfig) -> str:
     """Render a secure default pre-commit configuration."""
-    bandit_args = "        args: [-c, pyproject.toml, -r, .]" if project.pyproject_path else "        args: [-r, .]"
+    bandit_args = (
+        "        args: [-c, pyproject.toml, -r, .]"
+        if project.pyproject_path
+        else "        args: [-r, .]"
+    )
     repositories = [
         f"""repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -122,7 +126,9 @@ def render_ruff_toml(project: ProjectAnalysis) -> str:
     """Render a strict Ruff configuration."""
     framework_specific = ""
     if project.kind is ProjectKind.DJANGO:
-        framework_specific = '\n[lint.per-file-ignores]\n"**/migrations/*.py" = ["E501", "RUF012"]\n'
+        framework_specific = (
+            '\n[lint.per-file-ignores]\n"**/migrations/*.py" = ["E501", "RUF012"]\n'
+        )
 
     return f"""target-version = "py312"
 line-length = 100
@@ -155,7 +161,7 @@ lint = {str(config.checks.lint).lower()}
 format = {str(config.checks.format).lower()}
 security = {str(config.checks.security).lower()}
 dependencies = {str(config.checks.dependencies).lower()}
-secrets = {str(config.checks.secrets).lower()}
+secrets = {str(config.checks.secrets).lower()}  # pragma: allowlist secret
 git = {str(config.checks.git).lower()}
 framework = {str(config.checks.framework).lower()}
 doctor = {str(config.checks.doctor).lower()}
@@ -164,7 +170,7 @@ doctor = {str(config.checks.doctor).lower()}
 use_ruff_format = {str(config.tools.use_ruff_format).lower()}
 include_black = {str(config.tools.include_black).lower()}
 include_isort = {str(config.tools.include_isort).lower()}
-include_git_secrets = {str(config.tools.include_git_secrets).lower()}
+include_git_secrets = {str(config.tools.include_git_secrets).lower()}  # pragma: allowlist secret
 include_osv_scanner = {str(config.tools.include_osv_scanner).lower()}
 include_safety = {str(config.tools.include_safety).lower()}"""
 
@@ -195,7 +201,7 @@ def render_env_example(project: ProjectAnalysis) -> str:
             [
                 "APP_HOST=0.0.0.0",
                 "APP_PORT=8000",
-                "DATABASE_URL=postgresql+psycopg://user:pass@localhost:5432/app",
+                "DATABASE_URL=postgresql+psycopg://postgres@localhost:5432/app",
                 "CORS_ALLOWED_ORIGINS=http://localhost:3000",
             ]
         )
@@ -203,13 +209,13 @@ def render_env_example(project: ProjectAnalysis) -> str:
         base.extend(
             [
                 "DJANGO_SETTINGS_MODULE=config.settings.production",
-                "DATABASE_URL=postgres://user:pass@localhost:5432/app",
+                "DATABASE_URL=postgres://postgres@localhost:5432/app",
                 "ALLOWED_HOSTS=localhost,127.0.0.1",
                 "CSRF_TRUSTED_ORIGINS=https://example.com",
             ]
         )
     else:
-        base.append("DATABASE_URL=postgresql://user:pass@localhost:5432/app")
+        base.append("DATABASE_URL=postgresql://postgres@localhost:5432/app")
     return "\n".join(base)
 
 

@@ -89,13 +89,19 @@ def _build_recommendations(kind: ProjectKind) -> list[str]:
             "Adopt FastAPI lifespan handlers instead of legacy startup/shutdown events.",
             "Centralize configuration with pydantic-settings and explicit environment models.",
             "Add structured request logging, security middleware, and a health endpoint contract.",
-            "Review CORS, rate limiting, Docker image hardening, and uvicorn/gunicorn worker settings.",
+            (
+                "Review CORS, rate limiting, Docker image hardening, and "
+                "uvicorn/gunicorn worker settings."
+            ),
         ]
     if kind is ProjectKind.DJANGO:
         return [
             "Run deploy-time checks regularly and enforce secure cookie and HSTS settings.",
             "Split settings by environment and load secrets from environment variables only.",
-            "Review DRF authentication defaults, logging, WhiteNoise, and gunicorn production settings.",
+            (
+                "Review DRF authentication defaults, logging, WhiteNoise, and "
+                "gunicorn production settings."
+            ),
         ]
     if kind is ProjectKind.GENERIC:
         return [

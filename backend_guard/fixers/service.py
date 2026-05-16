@@ -17,13 +17,48 @@ class FixService:
         commands = [
             [*python_module_command(project.environment, "ruff"), "check", ".", "--fix"],
             [*python_module_command(project.environment, "ruff"), "format", "."],
-            [*python_module_command(project.environment, "pre_commit"), "run", "trailing-whitespace", "--all-files"],
-            [*python_module_command(project.environment, "pre_commit"), "run", "end-of-file-fixer", "--all-files"],
-            [*python_module_command(project.environment, "pre_commit"), "run", "mixed-line-ending", "--all-files"],
-            [*python_module_command(project.environment, "pre_commit"), "run", "check-json", "--all-files"],
-            [*python_module_command(project.environment, "pre_commit"), "run", "check-toml", "--all-files"],
-            [*python_module_command(project.environment, "pre_commit"), "run", "check-yaml", "--all-files"],
-            [*python_module_command(project.environment, "pre_commit"), "run", "pyupgrade", "--all-files"],
+            [
+                *python_module_command(project.environment, "pre_commit"),
+                "run",
+                "trailing-whitespace",
+                "--all-files",
+            ],
+            [
+                *python_module_command(project.environment, "pre_commit"),
+                "run",
+                "end-of-file-fixer",
+                "--all-files",
+            ],
+            [
+                *python_module_command(project.environment, "pre_commit"),
+                "run",
+                "mixed-line-ending",
+                "--all-files",
+            ],
+            [
+                *python_module_command(project.environment, "pre_commit"),
+                "run",
+                "check-json",
+                "--all-files",
+            ],
+            [
+                *python_module_command(project.environment, "pre_commit"),
+                "run",
+                "check-toml",
+                "--all-files",
+            ],
+            [
+                *python_module_command(project.environment, "pre_commit"),
+                "run",
+                "check-yaml",
+                "--all-files",
+            ],
+            [
+                *python_module_command(project.environment, "pre_commit"),
+                "run",
+                "pyupgrade",
+                "--all-files",
+            ],
         ]
 
         results: list[CommandResult] = []

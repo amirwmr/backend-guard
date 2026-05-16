@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -37,15 +38,50 @@ def _count_merge_conflicts(root: Path) -> int:
             continue
         if any(part in SKIP_DIRECTORIES for part in path.parts):
             continue
-        if path.suffix not in {".py", ".toml", ".yaml", ".yml", ".json", ".ini", ".cfg", ".env", ".txt"}:
+        if path.suffix not in {
+            ".py",
+            ".toml",
+            ".yaml",
+            ".yml",
+            ".json",
+            ".ini",
+            ".cfg",
+            ".env",
+            ".txt",
+        }:
             continue
         try:
             content = path.read_text(encoding="utf-8")
         except (OSError, UnicodeDecodeError):
             continue
-        if "<<<<<<<" in content and ">>>>>>>" in content:
+        lines = content.splitlines()
+        has_start = any(re.match(r"^<<<<<<<(?: .*)?$", line) for line in lines)
+        has_end = any(re.match(r"^>>>>>>> (?:.*)$", line) for line in lines)
+        if has_start and has_end:
             count += 1
     return count
+
+
+def _scanner_excludes() -> tuple[str, str]:
+    excluded_directories = [
+        ".venv",
+        "venv",
+        "env",
+        "__pycache__",
+        ".git",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".tox",
+        "node_modules",
+        "tests",
+    ]
+    bandit_excludes = ",".join(excluded_directories)
+    detect_secrets_excludes = (
+        r"(^|/)(\.venv|venv|env|__pycache__|\.git|\.mypy_cache|\.pytest_cache|"
+        r"\.ruff_cache|\.tox|node_modules)(/|$)"
+    )
+    return bandit_excludes, detect_secrets_excludes
 
 
 def _make_finding(
@@ -96,18 +132,24 @@ class AuditService:
             sections=[section for section in sections if section.findings],
             metadata={
                 "python_files_scanned": project.python_files_scanned,
-                "package_manager": project.package_manager.manager.value if project.package_manager else None,
+                "package_manager": project.package_manager.manager.value
+                if project.package_manager
+                else None,
                 "environment": str(project.environment.path) if project.environment else None,
             },
         )
 
     def _environment_section(self, project: ProjectAnalysis) -> AuditSection:
         findings: list[AuditFinding] = []
-        python_result = self.runner.run([resolve_python_executable(project.environment), "--version"])
+        python_result = self.runner.run(
+            [resolve_python_executable(project.environment), "--version"]
+        )
         if python_result.ok:
             version_output = python_result.stdout.strip() or python_result.stderr.strip()
             major, minor = sys.version_info[:2]
-            status = CheckStatus.PASSED if (major, minor) >= MIN_PYTHON_VERSION else CheckStatus.FAILED
+            status = (
+                CheckStatus.PASSED if (major, minor) >= MIN_PYTHON_VERSION else CheckStatus.FAILED
+            )
             severity = Severity.INFO if status is CheckStatus.PASSED else Severity.ERROR
             findings.append(
                 _make_finding(
@@ -155,7 +197,9 @@ class AuditService:
                 )
             )
         else:
-            manager_name = project.package_manager.manager.value if project.package_manager else "unknown"
+            manager_name = (
+                project.package_manager.manager.value if project.package_manager else "unknown"
+            )
             findings.append(
                 _make_finding(
                     category="environment",
@@ -185,7 +229,9 @@ class AuditService:
                     detail="No dependency lockfile or requirements manifest was detected.",
                     severity=Severity.WARNING,
                     status=CheckStatus.WARNING,
-                    remediation="Commit uv.lock, poetry.lock, Pipfile.lock, or a requirements file.",
+                    remediation=(
+                        "Commit uv.lock, poetry.lock, Pipfile.lock, or a requirements file."
+                    ),
                 )
             )
         return AuditSection(name="Environment", findings=findings)
@@ -193,7 +239,9 @@ class AuditService:
     def _structure_section(self, project: ProjectAnalysis) -> AuditSection:
         findings: list[AuditFinding] = []
         expected_files = {
-            ".pre-commit-config.yaml": "Run 'backend-guard init' to generate a secure pre-commit config.",
+            ".pre-commit-config.yaml": (
+                "Run 'backend-guard init' to generate a secure pre-commit config."
+            ),
             "ruff.toml": "Run 'backend-guard init' to generate Ruff defaults.",
             CONFIG_FILE_NAME: "Use .backend-guard.toml to tailor checks and generated files.",
             ".editorconfig": "Add editor defaults to reduce whitespace and newline drift.",
@@ -289,27 +337,47 @@ class AuditService:
             )
         return AuditSection(name="Git", findings=findings)
 
-    def _tooling_section(self, project: ProjectAnalysis, config: BackendGuardConfig) -> AuditSection:
+    def _tooling_section(
+        self, project: ProjectAnalysis, config: BackendGuardConfig
+    ) -> AuditSection:
         findings: list[AuditFinding] = []
+        bandit_excludes, _ = _scanner_excludes()
 
         if config.checks.lint:
             ruff_result = self.runner.run(
-                [*python_module_command(project.environment, "ruff"), "check", ".", "--output-format=json"],
+                [
+                    *python_module_command(project.environment, "ruff"),
+                    "check",
+                    ".",
+                    "--output-format=json",
+                ],
                 cwd=project.root,
             )
             findings.extend(self._lint_findings_from_result("ruff", ruff_result))
 
         if config.checks.security:
             bandit_result = self.runner.run(
-                [*python_module_command(project.environment, "bandit"), "-r", ".", "-f", "json", "-q"],
+                [
+                    *python_module_command(project.environment, "bandit"),
+                    "-r",
+                    ".",
+                    "-f",
+                    "json",
+                    "-q",
+                    "-x",
+                    bandit_excludes,
+                ],
                 cwd=project.root,
             )
             findings.extend(self._bandit_findings_from_result(bandit_result))
 
         return AuditSection(name="Tooling", findings=findings)
 
-    def _supply_chain_section(self, project: ProjectAnalysis, config: BackendGuardConfig) -> AuditSection:
+    def _supply_chain_section(
+        self, project: ProjectAnalysis, config: BackendGuardConfig
+    ) -> AuditSection:
         findings: list[AuditFinding] = []
+        _, detect_secrets_excludes = _scanner_excludes()
 
         if config.checks.dependencies:
             command = [*python_module_command(project.environment, "pip_audit"), "--format=json"]
@@ -324,7 +392,8 @@ class AuditService:
                     resolve_env_executable(project.environment, "detect-secrets"),
                     "scan",
                     "--all-files",
-                    "--force-use-all-plugins",
+                    "--exclude-files",
+                    detect_secrets_excludes,
                 ],
                 cwd=project.root,
             )
@@ -343,7 +412,10 @@ class AuditService:
                 _make_finding(
                     category="framework",
                     title="Generic backend detected",
-                    detail="No framework-specific checks were applicable; generic backend heuristics were used.",
+                    detail=(
+                        "No framework-specific checks were applicable; generic "
+                        "backend heuristics were used."
+                    ),
                     severity=Severity.INFO,
                     status=CheckStatus.PASSED,
                 )
@@ -389,7 +461,9 @@ class AuditService:
                 detail=f"Ruff reported {len(issues)} issue(s).",
                 severity=Severity.ERROR,
                 status=CheckStatus.FAILED,
-                remediation="Run 'backend-guard fix' or 'ruff check --fix' for safe automated fixes.",
+                remediation=(
+                    "Run 'backend-guard fix' or 'ruff check --fix' for safe automated fixes."
+                ),
                 tool=tool,
             )
         ]
@@ -433,7 +507,9 @@ class AuditService:
                 detail=f"Bandit reported {len(issues)} potential issue(s).",
                 severity=Severity.ERROR,
                 status=CheckStatus.FAILED,
-                remediation="Review Bandit output and fix or explicitly suppress legitimate exceptions.",
+                remediation=(
+                    "Review Bandit output and fix or explicitly suppress legitimate exceptions."
+                ),
                 tool="bandit",
             )
         ]
@@ -480,7 +556,9 @@ class AuditService:
                     detail=result.stderr.strip() or result.stdout.strip(),
                     severity=Severity.WARNING,
                     status=CheckStatus.WARNING,
-                    remediation="Ensure the active environment can resolve and import project dependencies.",
+                    remediation=(
+                        "Ensure the active environment can resolve and import project dependencies."
+                    ),
                     tool="pip-audit",
                 )
             ]
@@ -538,7 +616,9 @@ class AuditService:
                     detail=result.stderr.strip() or result.stdout.strip(),
                     severity=Severity.WARNING,
                     status=CheckStatus.WARNING,
-                    remediation="Verify detect-secrets is installed and the repository is readable.",
+                    remediation=(
+                        "Verify detect-secrets is installed and the repository is readable."
+                    ),
                     tool="detect-secrets",
                 )
             ]
@@ -549,7 +629,9 @@ class AuditService:
                 detail=f"detect-secrets reported {candidates} candidate secret(s).",
                 severity=Severity.ERROR,
                 status=CheckStatus.FAILED,
-                remediation="Review the findings, rotate exposed credentials, and add a baseline if needed.",
+                remediation=(
+                    "Review the findings, rotate exposed credentials, and add a baseline if needed."
+                ),
                 tool="detect-secrets",
             )
         ]
@@ -557,7 +639,14 @@ class AuditService:
     def _django_findings(self, project: ProjectAnalysis) -> list[AuditFinding]:
         findings: list[AuditFinding] = []
         if project.manage_py:
-            command = [str(project.environment.python_executable if project.environment else sys.executable), "manage.py", "check", "--deploy"]
+            command = [
+                str(
+                    project.environment.python_executable if project.environment else sys.executable
+                ),
+                "manage.py",
+                "check",
+                "--deploy",
+            ]
             result = self.runner.run(command, cwd=project.root)
             if result.ok:
                 findings.append(
@@ -578,7 +667,9 @@ class AuditService:
                         detail=result.stdout.strip() or result.stderr.strip(),
                         severity=Severity.ERROR,
                         status=CheckStatus.FAILED,
-                        remediation="Address Django deploy check findings before production release.",
+                        remediation=(
+                            "Address Django deploy check findings before production release."
+                        ),
                         tool="django",
                     )
                 )
@@ -586,7 +677,9 @@ class AuditService:
         settings_files = sorted(project.root.glob("**/settings*.py"))
         dangerous_patterns = {
             "DEBUG = True": "Disable DEBUG outside local development.",
-            "SESSION_COOKIE_SECURE = False": "Enable secure session cookies in production settings.",
+            "SESSION_COOKIE_SECURE = False": (
+                "Enable secure session cookies in production settings."
+            ),
             "CSRF_COOKIE_SECURE = False": "Enable secure CSRF cookies in production settings.",
         }
         for settings_file in settings_files[:10]:
@@ -667,7 +760,9 @@ class AuditService:
                     detail="No health endpoint convention was detected.",
                     severity=Severity.WARNING,
                     status=CheckStatus.WARNING,
-                    remediation="Expose a lightweight health endpoint for probes and uptime checks.",
+                    remediation=(
+                        "Expose a lightweight health endpoint for probes and uptime checks."
+                    ),
                 )
             )
         return findings
