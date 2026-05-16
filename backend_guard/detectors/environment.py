@@ -28,6 +28,17 @@ def detect_virtual_environment(
     package_manager: PackageManagerAnalysis,
 ) -> VirtualEnvironment | None:
     """Locate the best matching virtual environment for the current project."""
+    for candidate in (".venv", "venv", "env"):
+        env_path = root / candidate
+        python_path = _python_path_for_env(env_path)
+        if python_path.exists():
+            return VirtualEnvironment(
+                path=env_path,
+                python_executable=python_path,
+                source=candidate,
+                manager=package_manager.manager,
+            )
+
     active_venv = os.environ.get("VIRTUAL_ENV")
     if active_venv:
         active_path = Path(active_venv)
@@ -37,17 +48,6 @@ def detect_virtual_environment(
                 path=active_path,
                 python_executable=python_path,
                 source="VIRTUAL_ENV",
-                manager=package_manager.manager,
-            )
-
-    for candidate in (".venv", "venv", "env"):
-        env_path = root / candidate
-        python_path = _python_path_for_env(env_path)
-        if python_path.exists():
-            return VirtualEnvironment(
-                path=env_path,
-                python_executable=python_path,
-                source=candidate,
                 manager=package_manager.manager,
             )
 

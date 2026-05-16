@@ -278,20 +278,14 @@ def render_makefile_block(project: ProjectAnalysis) -> str:
 
 
 def render_github_actions(project: ProjectAnalysis) -> str:
-    runtime_cache_step = ""
-    if project.package_manager and project.package_manager.manager.value == "uv":
-        runtime_cache_step = """      - name: Install uv
-        uses: astral-sh/setup-uv@v4
-"""
-
     framework_hint = ""
     if project.kind is ProjectKind.DJANGO:
         framework_hint = """      - name: Django deploy checks
-        run: backend-guard audit
+        run: uv run backend-guard audit
 """
     else:
         framework_hint = """      - name: Backend Guard audit
-        run: backend-guard audit
+        run: uv run backend-guard audit
 """
 
     return f"""name: Backend Guard
@@ -309,10 +303,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-{runtime_cache_step}      - name: Install backend-guard
-        run: python -m pip install --upgrade pip backend-guard
+      - uses: astral-sh/setup-uv@v4
+      - name: Sync project environment
+        run: uv sync --dev
       - name: Install project tooling
-        run: backend-guard install --yes
+        run: uv run backend-guard install --yes
 {framework_hint}"""
 
 

@@ -1,50 +1,24 @@
 # Backend Guard
 
-`backend-guard` is a production-minded CLI for Python backend teams that want secure pre-commit defaults, dependency auditing, and framework-aware project checks without hand-assembling half a dozen tools every time a new repository starts.
+`backend-guard` is a production-focused CLI for Python backend repositories. It detects Django, FastAPI, and generic service projects, bootstraps strict development tooling, installs secure pre-commit hooks, and provides a repeatable audit/fix/doctor workflow with minimal setup.
 
-It detects Django, FastAPI, and generic Python backend services, understands common Python packaging ecosystems, creates or reuses local virtual environments, installs strict quality tooling, and gives teams a consistent `init -> audit -> fix -> doctor -> update` workflow.
+This repository is developed and tested with `uv`, and the local contributor workflow is `uv`-first.
 
-## Highlights
+## What it does
 
-- Detects FastAPI, Django, and generic backend projects from dependencies, imports, lockfiles, and layout signals.
-- Detects `.venv`, `venv`, `env`, Poetry environments, Pipenv environments, and active `VIRTUAL_ENV`.
-- Prefers `uv` for environment creation and falls back to `python -m venv`.
-- Supports `uv`, `pip`, `poetry`, `pipenv`, `requirements.txt`, and `pyproject.toml` workflows.
-- Generates secure pre-commit defaults with Ruff, pyupgrade, Bandit, detect-secrets, and dependency auditing.
-- Adds `.editorconfig`, `.env.example`, `.gitignore` improvements, a Makefile block, and an optional GitHub Actions workflow.
-- Runs project-aware audits with categorized findings, remediation guidance, and JSON output.
-- Applies safe automated fixes only.
-- Includes unit, CLI, integration, and snapshot-style tests.
-
-## Install
-
-### One-line install
-
-```bash
-curl -fsSL https://example.com/install.sh | bash
-```
-
-### Windows PowerShell
-
-```powershell
-irm https://example.com/install.ps1 | iex
-```
-
-### Direct package installs
-
-```bash
-pipx install backend-guard
-```
-
-```bash
-uv tool install backend-guard
-```
-
-```bash
-python -m pip install --user backend-guard
-```
-
-The shell installer prefers `uv tool install`, then `pipx`, then `pip --user`. WSL uses the Linux shell installer path.
+- Detects Django, FastAPI, and generic Python backend repositories from lockfiles, manifests, imports, and filesystem layout.
+- Detects project environments from `.venv`, `venv`, `env`, Poetry, Pipenv, `uv`, and `VIRTUAL_ENV`.
+- Prefers `uv` for environment creation and package management.
+- Generates strict defaults for:
+  - `.pre-commit-config.yaml`
+  - `ruff.toml`
+  - `.backend-guard.toml`
+  - `.editorconfig`
+  - `.env.example`
+  - managed blocks in `.gitignore` and `Makefile`
+  - `.github/workflows/backend-guard.yml`
+- Runs structured repository audits across linting, secrets, dependencies, Git hygiene, and framework-specific checks.
+- Applies safe automatic fixes without silently rewriting risky code.
 
 ## Commands
 
@@ -58,37 +32,120 @@ backend-guard update
 backend-guard uninstall
 ```
 
-### Common flags
+Useful global flags:
 
-- `--root`: inspect a specific project directory
-- `--yes`: accept prompts automatically
-- `--json`: emit JSON for machine-readable commands
-- `--dry-run`: preview actions without touching files
-- `--verbose`: show more execution detail
+- `--root`
+- `--yes`
+- `--json`
+- `--dry-run`
+- `--verbose`
 
-## What `init` does
+## Install
+
+### Preferred
+
+```bash
+uv tool install backend-guard
+```
+
+### Also supported
+
+```bash
+pipx install backend-guard
+```
+
+```bash
+python -m pip install --user backend-guard
+```
+
+### Installer scripts
+
+Shell and PowerShell installers are included in [scripts/install.sh](./scripts/install.sh) and [scripts/install.ps1](./scripts/install.ps1).
+
+Example published usage after release hosting is in place:
+
+```bash
+curl -fsSL https://example.com/install.sh | bash
+```
+
+```powershell
+irm https://example.com/install.ps1 | iex
+```
+
+## Quick start
+
+Bootstrap a backend project:
+
+```bash
+backend-guard init --yes
+```
+
+Audit it:
+
+```bash
+backend-guard audit
+```
+
+Apply safe automatic fixes:
+
+```bash
+backend-guard fix
+```
+
+Diagnose local setup issues:
+
+```bash
+backend-guard doctor
+```
+
+## Local development
+
+This repository uses `uv` for local development.
+
+Create or refresh the environment:
+
+```bash
+uv sync --dev
+```
+
+Run the test suite:
+
+```bash
+uv run pytest
+```
+
+Run the CLI from the working tree:
+
+```bash
+uv run backend-guard --help
+```
+
+Run the convenience targets:
+
+```bash
+make guard-audit
+make guard-fix
+make guard-doctor
+```
+
+The generated `Makefile` prefers `uv run backend-guard ...` automatically when `uv` is available.
+
+## What `init` sets up
 
 `backend-guard init` will:
 
-1. Detect the framework, package manager, and environment.
-2. Offer to create `.venv` when no environment exists.
-3. Install dev tooling into the current project ecosystem.
-4. Generate or update:
-   - `.pre-commit-config.yaml`
-   - `ruff.toml`
-   - `.backend-guard.toml`
-   - `.editorconfig`
-   - `.env.example`
-   - `.github/workflows/backend-guard.yml`
-   - managed blocks in `.gitignore` and `Makefile`
+1. Detect the project type, package manager, and current environment.
+2. Offer to create `.venv` when no local environment exists.
+3. Install project tooling into the detected ecosystem.
+4. Generate or update managed configuration files.
 5. Install Git hooks when the repository is under Git.
-6. Print framework-specific recommendations for FastAPI or Django.
+6. Print framework-aware recommendations for Django and FastAPI projects.
 
-## Generated defaults
+## Tooling defaults
 
 ### Pre-commit
 
-The generated `.pre-commit-config.yaml` includes:
+The generated pre-commit configuration includes:
 
 - `pre-commit-hooks`
 - `ruff`
@@ -98,24 +155,30 @@ The generated `.pre-commit-config.yaml` includes:
 - `detect-secrets`
 - `pip-audit`
 
-Optional toggles in `.backend-guard.toml` allow enabling Black, isort, Safety, git-secrets, and OSV scanner hooks.
+Optional toggles in `.backend-guard.toml` can enable:
+
+- Black
+- isort
+- Safety
+- git-secrets
+- OSV scanner
 
 ### Audit coverage
 
 `backend-guard audit` checks:
 
 - environment health
-- package manager sanity
-- lockfile presence
-- Git status and merge-conflict markers
+- package manager and lockfile state
+- Git working tree hygiene
+- merge-conflict markers
 - Ruff lint results
 - Bandit findings
-- dependency vulnerabilities through `pip-audit`
-- secret exposure candidates with `detect-secrets`
-- Django deploy checks and dangerous Django settings
-- FastAPI heuristics such as lifespan usage, wildcard CORS, and health endpoints
+- `pip-audit` vulnerability results
+- `detect-secrets` findings
+- Django deploy checks and risky settings
+- FastAPI conventions such as lifespan usage, CORS posture, and health endpoints
 
-## Architecture
+## Repository layout
 
 ```text
 backend_guard/
@@ -133,61 +196,33 @@ example-configs/
 .github/workflows/
 ```
 
-### Key design choices
-
-- Python 3.12+
-- Typer for command UX
-- Rich for rendering
-- Pydantic for typed configuration and report models
-- safe `subprocess.run(..., shell=False)` everywhere
-- atomic file writes for managed files
-- explicit overwrite protection for unmanaged configs
-
-## Example usage
-
-```bash
-backend-guard --root /path/to/service init --yes
-backend-guard audit
-backend-guard fix
-backend-guard doctor --json
-```
-
 ## Configuration
 
 Project-local configuration lives in `.backend-guard.toml`.
 
-An example config is included at [example-configs/backend-guard.toml](./example-configs/backend-guard.toml).
+An example is included in [example-configs/backend-guard.toml](./example-configs/backend-guard.toml).
 
-## Testing
+## CI and release workflow
 
-Run the local test suite with:
+This repository uses `uv` in CI:
 
-```bash
-python -m pip install -e ".[dev]"
-pytest
-```
+- [ci.yml](./.github/workflows/ci.yml) runs `uv sync --dev`, `uv run pytest`, and a CLI smoke test.
+- [backend-guard.yml](./.github/workflows/backend-guard.yml) runs the repo’s own guard workflow with `uv`.
+- [release.yml](./.github/workflows/release.yml) builds distributions with `uv build` and validates them with Twine.
 
-The suite includes:
+## Publishing
 
-- detector unit tests
-- filesystem safety tests
-- CLI tests via Typer's `CliRunner`
-- integration tests for file generation and uninstall flow
-- a snapshot-style audit regression test
+The package is ready for:
 
-## Packaging and release
-
-The project ships as a standard Python package with a console entrypoint:
-
-- PyPI-friendly `pyproject.toml`
-- `pipx` and `uv tool install` support
-- shell and PowerShell installers
-- GitHub Actions CI
-- self-uninstall support for installer-managed installations
+- PyPI publishing
+- `uv tool install`
+- `pipx install`
+- GitHub Releases
+- shell and PowerShell installer distribution
 
 ## Uninstall
 
-Remove project integration:
+Remove managed project files:
 
 ```bash
 backend-guard uninstall
@@ -197,10 +232,4 @@ Attempt to remove the CLI itself when installed via the installer manifest:
 
 ```bash
 backend-guard uninstall --self
-```
-
-If you installed with `pipx`, you can also use:
-
-```bash
-pipx uninstall backend-guard
 ```

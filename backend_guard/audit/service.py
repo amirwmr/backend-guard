@@ -356,19 +356,19 @@ class AuditService:
             findings.extend(self._lint_findings_from_result("ruff", ruff_result))
 
         if config.checks.security:
-            bandit_result = self.runner.run(
-                [
-                    *python_module_command(project.environment, "bandit"),
-                    "-r",
-                    ".",
-                    "-f",
-                    "json",
-                    "-q",
-                    "-x",
-                    bandit_excludes,
-                ],
-                cwd=project.root,
-            )
+            bandit_command = [
+                *python_module_command(project.environment, "bandit"),
+                "-r",
+                ".",
+                "-f",
+                "json",
+                "-q",
+                "-x",
+                bandit_excludes,
+            ]
+            if project.pyproject_path:
+                bandit_command.extend(["-c", str(project.pyproject_path)])
+            bandit_result = self.runner.run(bandit_command, cwd=project.root)
             findings.extend(self._bandit_findings_from_result(bandit_result))
 
         return AuditSection(name="Tooling", findings=findings)

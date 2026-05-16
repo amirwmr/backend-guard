@@ -12,6 +12,11 @@ def _venv_python_path(root: Path) -> Path:
     return root / ".venv" / "bin" / "python"
 
 
+@pytest.fixture(autouse=True)
+def clear_active_virtual_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("VIRTUAL_ENV", raising=False)
+
+
 @pytest.fixture()
 def fastapi_project(tmp_path: Path) -> Path:
     project = tmp_path / "fastapi-service"

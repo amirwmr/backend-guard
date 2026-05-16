@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import shutil
-import subprocess
+import subprocess  # nosec B404
 import time
 from collections.abc import Mapping
 from pathlib import Path
@@ -39,7 +39,8 @@ class CommandRunner:
             )
 
         start = time.perf_counter()
-        completed = subprocess.run(
+        # Commands are executed with shell=False and an explicit argv list.
+        completed = subprocess.run(  # nosec B603
             args,
             cwd=str(cwd) if cwd else None,
             env=dict(env) if env else None,
