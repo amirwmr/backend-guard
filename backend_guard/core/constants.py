@@ -82,3 +82,7 @@ SKIP_DIRECTORIES = {
     "node_modules",
     "tests",
 }
+
+PROJECT_SIGNAL_SKIP_DIRECTORIES = {
+    "examples",
+}

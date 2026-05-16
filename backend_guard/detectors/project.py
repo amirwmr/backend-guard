@@ -11,6 +11,7 @@ from backend_guard.core.constants import (
     DJANGO_KEYWORDS,
     FASTAPI_KEYWORDS,
     GENERIC_BACKEND_KEYWORDS,
+    PROJECT_SIGNAL_SKIP_DIRECTORIES,
     SKIP_DIRECTORIES,
 )
 from backend_guard.core.models import ProjectAnalysis, ProjectKind
@@ -51,7 +52,8 @@ def _load_requirements_dependencies(requirements_files: list[Path]) -> list[str]
 def _iter_python_files(root: Path, *, limit: int = 250) -> list[Path]:
     python_files: list[Path] = []
     for current_root, directories, files in os.walk(root):
-        directories[:] = [name for name in directories if name not in SKIP_DIRECTORIES]
+        ignored_directories = SKIP_DIRECTORIES | PROJECT_SIGNAL_SKIP_DIRECTORIES
+        directories[:] = [name for name in directories if name not in ignored_directories]
         for name in files:
             if not name.endswith(".py"):
                 continue

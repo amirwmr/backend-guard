@@ -4,6 +4,15 @@
 
 This repository is developed and tested with `uv`, and the local contributor workflow is `uv`-first.
 
+## Reference examples
+
+Inspectable starter templates live under [examples/django-standard](./examples/django-standard) and [examples/fastapi-standard](./examples/fastapi-standard).
+
+- [examples/django-standard](./examples/django-standard) is a production-style Django + DRF reference app with split settings, `.env` management, health checks, and `uv`-first commands.
+- [examples/fastapi-standard](./examples/fastapi-standard) is a production-style FastAPI + SQLModel reference app with Alembic, `pydantic-settings`, health checks, and `uv`-first commands.
+
+They are intended to be copied and adapted by users, while `backend-guard` itself remains the CLI that bootstraps and audits real projects.
+
 ## What it does
 
 - Detects Django, FastAPI, and generic Python backend repositories from lockfiles, manifests, imports, and filesystem layout.
@@ -193,6 +202,7 @@ backend_guard/
 tests/
 scripts/
 example-configs/
+examples/
 .github/workflows/
 ```
 

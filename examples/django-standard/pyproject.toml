@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling>=1.25.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "django-standard"
+version = "0.1.0"
+description = "Production-style Django starter for backend-guard examples."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "django>=5.1,<6.0",
+  "django-environ>=0.11.2,<1.0.0",
+  "djangorestframework>=3.15.2,<4.0.0",
+  "gunicorn>=23.0.0,<24.0.0",
+  "whitenoise>=6.9.0,<7.0.0",
+]
+
+[project.optional-dependencies]
+jwt = [
+  "djangorestframework-simplejwt>=5.3.1,<6.0.0",
+]
+
+[dependency-groups]
+dev = [
+  "ruff>=0.11.0,<1.0.0",
+]
+
+[tool.uv]
+package = false
